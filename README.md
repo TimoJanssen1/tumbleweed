@@ -205,8 +205,6 @@ python tk.py tournament bots/gunslinger                                # full Sw
 python tk.py profile                                                   # the field's fold rates, from the logs
 ```
 
-The bots ship behind **105 unit tests** (safety invariants that must never regress + checks that the
-exploit fires *and* stays disciplined) and made **0 errors across 16,313 live hands**.
 
 ## The Ugly
 
