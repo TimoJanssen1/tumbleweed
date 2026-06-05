@@ -122,10 +122,7 @@ numbers are meaningless:
 Even my cleanest comparison — Gunslinger vs Dutch — sits inside the noise on the sim. The gap leans
 bigger on the field built to the measured over-folding (about 3× the generic one), but ±50k swings
 keep both confidence intervals across zero. That's the point: chip-means can't settle this on the sim,
-so the deciding evidence came from the logs. I also believed the noise twice and caught it — a
-"+4,007, p=0.001" that evaporated at higher sample sizes, and an "88% fold-to-4-bet" I'd assumed
-instead of measured (it's ~40%; the bluff that leaned on it got cut). Both are still documented;
-hiding them would read worse.
+so the deciding evidence came from the logs.
 
 ## How it works
 
