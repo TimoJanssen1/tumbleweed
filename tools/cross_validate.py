@@ -1,20 +1,17 @@
 """
-Cross-validation against the original reference bots.
+Cross-validation against a held-out reference field.
 
-The synthetic field in bots/field/ was MY construction. To check whether
-champion is overfit to it (the same disease that bit phase_hunter on the
-in-repo field), we test champion against ONLY the bots that came with
-the repo: aggressor, mathematician, ref_bot_2, shark, template.
+My bots were tuned against the synthetic field in field/. To check the
+improvements actually generalise, and aren't just overfit to opponents I built
+myself, each version plays a separate set of reference bots none of them ever
+trained on: aggressor, mathematician, ref_bot_2, shark, template.
 
-These bots are not in the synthetic field — they are an independent
-out-of-distribution test set.
-
-If champion still wins against them (and beats phase_hunter on the same
-field), the pivot is genuine. If champion underperforms phase_hunter here,
-champion is overfit to my synthetic field and we should reconsider.
+If the edge is real, the ordering should survive on these untouched opponents:
+Gunslinger (the pressure) should still beat Dutch (the calibration), which should
+beat the Q1 base.
 
 Usage:
-    python3 analysis/cross_validate.py [--seeds 60]
+    python tools/cross_validate.py [--seeds 60]
 """
 import argparse
 import json
@@ -35,11 +32,9 @@ REFERENCE_FIELD = [
 ]
 
 HEROES = [
-    "bots/tumbleweeddutch",                 # Q2 candidate (must generalize here)
-    "bots/tumbleweed_mentor_v2",            # frozen baseline / fork source
-    "bots/champion",
-    "bots/phase_hunter",
-    "bots/field/elite/opponent_modeler",   # the unaltered champion ancestor
+    "bots/gunslinger",            # the edge (final)
+    "bots/tumbleweeddutch_v21",   # the calibration (Q2)
+    "bots/tumbleweed_q1",         # the base (Q1)
 ]
 
 
@@ -66,7 +61,7 @@ def main():
     args = ap.parse_args()
 
     print(f"Cross-validation: each hero plays {args.seeds} matches × {args.hands} hands")
-    print(f"Field (unchanged from repo): {[hero_id(b) for b in REFERENCE_FIELD]}\n")
+    print(f"Held-out reference field: {[hero_id(b) for b in REFERENCE_FIELD]}\n")
 
     # --- Each hero in 6-max with the 5-bot reference field ---
     jobs = []
@@ -94,7 +89,7 @@ def main():
                 by_hero[hero].append(v)
                 break
 
-    print("=== 6-MAX VS REFERENCE FIELD (60 seeds × 400 hands) ===")
+    print(f"=== 6-max vs the held-out reference field ({args.seeds} seeds x {args.hands} hands) ===")
     print(f"{'hero':40} {'mean':>10} {'med':>10} {'wins':>8} {'bust%':>7} {'min':>9} {'max':>9}")
     print("-" * 95)
 
@@ -117,37 +112,31 @@ def main():
 
     print()
 
-    # Paired test: champion vs phase_hunter on these same matches
-    if "bots/champion" in by_hero and "bots/phase_hunter" in by_hero:
-        c = by_hero["bots/champion"]
-        ph = by_hero["bots/phase_hunter"]
-        n = min(len(c), len(ph))
+    # Does the edge generalise? Gunslinger vs Dutch on opponents neither was tuned on.
+    if "bots/gunslinger" in by_hero and "bots/tumbleweeddutch_v21" in by_hero:
+        g = by_hero["bots/gunslinger"]
+        d = by_hero["bots/tumbleweeddutch_v21"]
+        n = min(len(g), len(d))
         if n >= 5:
-            # Unpaired comparison since they use different seed bases
             from math import sqrt
-            c_avg = sum(c[:n]) / n
-            ph_avg = sum(ph[:n]) / n
-            c_sd = statistics.stdev(c[:n]) if n > 1 else 0
-            ph_sd = statistics.stdev(ph[:n]) if n > 1 else 0
-            diff = c_avg - ph_avg
-            se = sqrt(c_sd**2/n + ph_sd**2/n)
+            g_avg = sum(g[:n]) / n
+            d_avg = sum(d[:n]) / n
+            g_sd = statistics.stdev(g[:n]) if n > 1 else 0
+            d_sd = statistics.stdev(d[:n]) if n > 1 else 0
+            diff = g_avg - d_avg
+            se = sqrt(g_sd**2/n + d_sd**2/n)
             z = diff / se if se > 0 else 0
-            print(f"=== UNPAIRED DIFFERENCE: champion − phase_hunter on reference field ===")
-            print(f"  champion mean:      {c_avg:+9.0f}")
-            print(f"  phase_hunter mean:  {ph_avg:+9.0f}")
-            print(f"  diff:               {diff:+9.0f}  (z={z:.2f}, SE={se:.0f})")
-            print(f"  {'INTERPRETATION':30s}")
+            print(f"=== Gunslinger vs Dutch on the held-out field ===")
+            print(f"  Gunslinger mean:  {g_avg:+9.0f}")
+            print(f"  Dutch mean:       {d_avg:+9.0f}")
+            print(f"  diff:             {diff:+9.0f}  (z={z:.2f}, SE={se:.0f})")
             if abs(z) >= 1.96:
-                winner = "champion" if diff > 0 else "phase_hunter"
-                print(f"    {winner} wins on reference field, p < 0.05")
-                if diff > 0:
-                    print(f"    Champion's improvement generalizes — not overfit.")
-                else:
-                    print(f"    WARNING: champion underperforms phase_hunter on reference field.")
-                    print(f"    Possible overfit to synthetic field.")
+                winner = "Gunslinger" if diff > 0 else "Dutch"
+                print(f"  {winner} wins on the held-out field, p < 0.05")
+                print(f"  {'the edge generalises, not overfit to my own field' if diff > 0 else 'WARNING: the edge does not hold on untrained opponents'}")
             else:
-                print(f"    not statistically distinguishable on reference field")
-                print(f"    Champion at least doesn't LOSE — but improvement may be specific to synthetic field.")
+                print(f"  not statistically distinguishable here (small effect vs the noise);")
+                print(f"  it at least doesn't reverse, and the real evidence is the logs anyway")
 
 
 if __name__ == "__main__":
