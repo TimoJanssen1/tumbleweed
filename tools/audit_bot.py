@@ -32,8 +32,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO))
+from _engine import REPO, ENGINE, MATCH, ENV, resolve_bot
 
 from analysis.field_registry import (discover_field, sample_field_seeded,
                                       TIER_WEIGHTS, apply_survivor)
@@ -47,9 +46,9 @@ AGG = ("raise", "bet", "all_in")
 
 def run_one_match(args):
     bots, seed, hands = args
-    cmd = [sys.executable, "sandbox/match.py", *bots,
+    cmd = [sys.executable, MATCH, *[resolve_bot(b) for b in bots],
            "--hands", str(hands), "--seed", str(seed), "--full-json"]
-    p = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO))
+    p = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ENGINE), env=ENV)
     try:
         return seed, tuple(bots), json.loads(p.stdout)
     except Exception:

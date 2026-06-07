@@ -186,25 +186,31 @@ pip install matplotlib && python tk.py make-figures        # redraws the charts
 pip install pytest eval7 && python -m pytest tests/        # 45 checks: safety + the exploits fire
 ```
 
-Everything else needs the competition's harness, **fullhouse-engine**: the dealer
-(`sandbox/match.py`), the rules and the reference bots. It isn't included here, and the tools import
-it, so clone it and keep it as a sibling of this folder:
+The rest needs the competition's harness, **fullhouse-engine** (the dealer `sandbox/match.py`, the
+rules, and the field bots). Clone it as a sibling of this folder and the tools find it on their own (or
+set `FULLHOUSE_ENGINE` to wherever it lives):
 
 ```bash
 # 1. put this repo and the engine side by side:
 #      …/your-folder/
 #      ├── tumbleweed/         (this repo)
 #      └── fullhouse-engine/   (the harness)
-git clone <https://github.com/uzlez/fullhouse-engine.git> ../fullhouse-engine
-
-# 2. install the shared dependencies:
+git clone https://github.com/uzlez/fullhouse-engine.git ../fullhouse-engine
 pip install eval7 numpy scipy matplotlib
 
-# 3. run the suite with the engine on the path:
-export PYTHONPATH="$PWD/../fullhouse-engine"
+# 2. run the suite (no PYTHONPATH to set, the tools locate the engine):
 python tk.py --help                                                    # the whole suite
 python tk.py compare bots/gunslinger bots/tumbleweeddutch_v21 --crn --survivor --seeds 300
 python tk.py audit   bots/gunslinger --survivor --seeds 80             # behavioural fingerprint
 python tk.py tournament bots/gunslinger                                # full Swiss simulation
-python tk.py profile                                                   # the field's fold rates, from the logs
+python tk.py overfolders                                               # Gunslinger vs Dutch vs the over-folders
+```
+
+The two log-mining commands read the real Q2 match history, which isn't in this repo. Point
+`Q2_MATCH_DIR` at it:
+
+```bash
+export Q2_MATCH_DIR=/path/to/matchhistoryq2
+python tk.py profile      # the field's fold-to-3bet/4bet by tier
+python tk.py results      # my chip-Δ and showdown record by opponent strength
 ```
