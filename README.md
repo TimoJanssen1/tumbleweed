@@ -25,7 +25,7 @@ way to put it is that each one bolted on a layer the last one was missing — a 
 **calibration**, then an **edge**. I found them strictly in that order, one version at a time, mostly
 by being wrong first.
 
-> **Q1** → #28  ·  **Q2** → #14 (qualified)  ·  **Final** → still to come
+> **Q1** → #28  ·  **Q2** → #14 (qualified)  ·  **Final** → #4
 
 The final bot, *Gunslinger*, is those three layers stacked: a **base** (tight-aggressive poker on a
 Monte-Carlo equity estimate), a **calibration** (live per-opponent reads, plus thresholds tuned for a
@@ -55,10 +55,10 @@ strong base — and a clear list of what the next version should add.
 
 The Q1 logs made the leaks obvious: it folded **81%** to a single open, **83%** to a 3-bet, **73%**
 to a pot-sized bet, and never looked at the board. So v2 was the calibration layer. Board-texture
-awareness, so it stopped stacking off into coolers. The opponent model that had been sitting there
-inert, switched on — live reads of how each specific opponent plays. Position-aware opening,
-set-mining, modes deleted. And the thresholds tuned against a field weighted toward strong bots
-instead of the easy one.
+awareness, so it stopped stacking off into coolers. A real opponent model, built from scratch — live
+reads of how each specific opponent plays (3-bet%, fold-to-bets, aggression), reconstructed from the
+public action log. Position-aware opening, set-mining, modes deleted. And the thresholds tuned against
+a field weighted toward strong bots instead of the easy one.
 
 It jumped to **#14** and qualified. Dutch had a plan, and the plan was still, fundamentally, the
 weak bots:
@@ -69,7 +69,7 @@ With no top-64 opponents at the table it made **+16,892** a match; at tables ful
 even. Calibrated, board-aware, disciplined — and quietly dependent on there being weak bots in the
 room. The final does not invite the weak bots.
 
-## 3 · Gunslinger — the edge (the final)
+## 3 · Gunslinger — the edge (the final, #4)
 
 Top-64 only, so the farm was closed. A base and a calibration get you a competent bot; they don't get
 you an edge against good players. For that I stopped tuning my own bot and read the *opponents* — out
@@ -81,7 +81,7 @@ There's a ceiling on how often you can fold before betting at you with any two c
 money — about **50%** against a normal 3-bet (the "minimum-defense frequency"). The whole top-64 folds
 **~87–88%**: thirty-five points past the line, uniformly. And I'd been folding just as much.
 
-So Gunslinger keeps the base and the calibration and adds a possible edge: 3-bet far more (with blocker-gated
+So Gunslinger keeps the base and the calibration and adds the edge: 3-bet far more (with blocker-gated
 bluffs), 4-bet to defend my own opens instead of folding them, and continuation-bet to keep the lead
 instead of getting run over — while never 5-bet-bluffing, never stacking off light, and folding every
 bluff to a shove.
@@ -90,8 +90,15 @@ bluff to a shove.
 
 Reckless, then timid, then disciplined. It took three goes to land in the middle.
 
-**The final hasn't been played yet**, so there's no result to put here. This repo is a work in
-progress until it has.
+It finished **4th in the international ranking** — 5.53 BB/100 across 80 matches.
+
+![Fullhouse 2026 final standings — Tumble-Weed-Gunslinger in 4th](figures/final_leaderboard.webp)
+
+I don't have the final match logs yet, so I can't take the mechanism apart hand by hand. But the jump
+is hard to read any other way. Dutch reached #14 by farming weak bots (the chart above); the final was
+top-64 only, so that farm was gone — and the bot climbed anyway. The one thing that could carry it
+through a field with nothing soft left to beat is the one thing I built for exactly that field. The
+edge worked.
 
 ## The field
 
@@ -133,7 +140,7 @@ Three things in one `decide(state)` — the same three layers as the story:
 - **calibration** — a per-opponent model (3-bet% · fold-to-3bet/4bet · c-bet% · aggression ·
   tightness) rebuilt each match from the public action log, sample-gated so it doesn't react to three
   data points. It reads *behaviour*, never a hardcoded opponent.
-- **possible edge** — the disciplined preflop pressure from 3).
+- **edge** — the disciplined preflop pressure from 3).
 
 ## Repo structure
 
@@ -203,7 +210,7 @@ python tk.py profile                                                   # the fie
 ```
 
 
-## The Ugly
+## The Ugly *(to be updated once I have the final match logs)*
 
 - The edge holds *as long as the field keeps over-folding*. If they tighten, Gunslinger is at parity
   with Dutch, not behind — but the gap shrinks. Finger crossed!!!
