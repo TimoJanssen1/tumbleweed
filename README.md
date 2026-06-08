@@ -35,9 +35,7 @@ versions below *are* the three layers, in the order I worked them out.
 
 The first version is the base layer: **tight-aggressive (TAG) poker** on top of a Monte-Carlo equity
 estimate. TAG is the boring, proven winning style: enter pots with a disciplined set of strong-ish
-hands, and when you play, bet and raise rather than call. It's the right base for two reasons. It's
-**hard to exploit**: you're rarely the one holding the worst hand in the pot, so nobody traps you
-cheaply. And it **punishes a soft field**, which a hackathon field is: a good slice of the 300+ entries
+hands, and when you play, bet and raise rather than call. It's the right base because it **punishes a soft field**, which a hackathon field is: a good slice of the 300+ entries
 were thrown together against the deadline and happy to spew. So the plan was simple: play solid, don't
 punt, and let weaker players pay me off.
 
