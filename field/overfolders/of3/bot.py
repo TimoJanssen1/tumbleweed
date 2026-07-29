@@ -1,15 +1,20 @@
 """Calibrated FINALIST over-folder — models the measured Q2 top-64 aggregate.
 
-Built from MY independent analysis of the 40 real Q2 matches (handoff package/
-matchhistoryq2): the top-64 field opens ~41%, 3-bets ~7%, **folds ~93% of its
-opens to a 3-bet and ~88% to a 4-bet**, c-bets ~54%, folds-to-c-bet ~24%, AF ~3.6.
-That over-folding to preflop re-raises is the field's defining, exploitable trait
-and is exactly what v21/v22 never punished. This bot reproduces it so the
-benchmark can MEASURE the EV of v23's 3-bet/4-bet pressure (the sim field of
-"realistic" bots can't, because it doesn't over-fold — see CODER_HANDOFF §11).
+Calibration targets, from my analysis of the 40 real Q2 matches: the top-64
+field opens ~41%, 3-bets ~7%, **folds the large majority of its opens to a
+3-bet**, c-bets ~54%, folds-to-c-bet ~24%, AF ~3.6. That over-folding to
+preflop re-raises is the field's defining, exploitable trait and is exactly
+what Dutch (Q2) never punished. This bot reproduces it so the benchmark can
+MEASURE the EV of Gunslinger's 3-bet/4-bet pressure — the generic sim field
+of "realistic" bots can't, because it doesn't over-fold.
+
+The five bots in field/overfolders/ are intentionally identical apart from
+BOT_NAME: they model ONE measured archetype, copied so a table can be filled
+with it. Five literal files (rather than one shared module) is deliberate:
+the engine loads each bot.py standalone, with no package context to share.
 
 NOT used as a real opponent / not hardcoded into the submission — a validation
-instrument only. Fast (no MC). BOT_NAME is overwritten per-instance.
+instrument only. Fast (no MC). BOT_NAME is the only per-instance difference.
 """
 import random
 
@@ -106,8 +111,8 @@ def _inner(state):
             return raise_to(pot * 0.5)
         # STAB/float into a check when we're NOT the aggressor — this is the real
         # field's defining 2nd trait (AF 3.6): it PUNISHES a passive checker. A
-        # bot that checks 80% of flops (v21/v22) bleeds here; one that takes the
-        # lead (v23) denies it. Without this the field can't reward fixing passivity.
+        # bot that checks 80% of flops (Dutch) bleeds here; one that takes the
+        # lead (Gunslinger) denies it. Without this the field can't reward fixing passivity.
         if not we_raised and random.random() < 0.45:
             return raise_to(pot * 0.5)
         if made >= 2 and random.random() < 0.6:

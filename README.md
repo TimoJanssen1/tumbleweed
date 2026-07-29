@@ -115,17 +115,22 @@ You can't build a strong poker bot by testing against weak ones. The competition
 thin. Beating them taught me nothing I would need against the top 64, which is the exact trap Dutch
 fell into. So before I could improve the bot, I had to build something worth losing to.
 
-`field/` is that: **35 opponents generated from parametric templates**, each a tuned style
-(tightness, aggression, c-bet frequency, how it reacts to a raise). They span tiers from *weak*
-(calling stations, min-raisers, naive aggressors) through *mid* (hand-chart and pot-odds bots) and
-*strong* (Monte-Carlo equity bots, mixed-strategy ones) to a small *elite* tier, plus a few
-deliberately *broken* bots that crash or act illegally so I know mine survives them. The tiers are
-weighted to resemble the real distribution: mostly weak and mid, a thin top.
+`field/` is that: **35 opponents — 26 generated from parametric templates, 4 hand-written elite
+bots, and 5 calibrated over-folders**. Each generated bot is a tuned style (tightness, aggression,
+c-bet frequency, how it reacts to a raise); they span tiers from *weak* (calling stations,
+min-raisers, naive aggressors) through *mid* (hand-chart and pot-odds bots) and *strong*
+(Monte-Carlo equity bots, mixed-strategy ones), plus a few deliberately *broken* bots that crash
+or act illegally so I know mine survives them. The *elite* tier is hand-written — those four
+needed more care than a template could give. The tiers are weighted to resemble the real
+distribution: mostly weak and mid, a thin top.
 
 The five **over-folders** are a separate, special-purpose field: bots calibrated to the *measured*
 top-64 profile from the logs (fold ~90% to a 3-bet, c-bet ~54%, sticky postflop). They exist because
 the generic field, like the real practice bots, doesn't over-fold, so it can't reward the one change
-that mattered. To measure that change, I had to build an opponent that would.
+that mattered. To measure that change, I had to build an opponent that would. The five are
+intentionally identical apart from their name — one measured archetype, copied so a whole table of
+it can be dealt (the engine loads each `bot.py` standalone, so they stay literal files rather than
+importing a shared module).
 
 Then every change had to survive the `tools/` suite before I kept it: **CRN paired A/B** (both bots
 play the identical decks and opponents, subtract per match, so the card luck cancels), a full
@@ -149,11 +154,13 @@ tumbleweed/
 │   ├── tumbleweed_q1/         # the base       - Q1, #28
 │   ├── tumbleweeddutch_v21/   # + calibration  - Q2, #14
 │   └── gunslinger/            # + the edge     - the final
-├── field/                     # the opponent ecology I benchmark against (35 bots, generated)
-│   ├── weak/ mid/ strong/ elite/ broken/   #   archetypes, weighted to model the real field
+├── field/                     # the opponent ecology I benchmark against (35 bots)
+│   ├── weak/ mid/ strong/ broken/          #   26 template-generated archetypes
+│   ├── elite/                 #   4 hand-written elite bots (the thin top of the field)
 │   ├── overfolders/           #   5 bots calibrated to the measured top-64 (fold ~90% to raises)
-│   ├── generate.py            #   builds the field from templates
-│   └── templates.py           #   the bot-source templates it stamps out
+│   ├── generate.py            #   builds the 26 generated bots from templates
+│   ├── templates.py           #   the bot-source templates it stamps out
+│   └── preflop_table.py       #   the 169-hand equity table it inlines into each bot
 ├── tools/
 │   ├── compare_bots.py        #   CRN head-to-head A/B between two bots
 │   ├── audit_bot.py           #   one bot's behavioural fingerprint (3-bet%, c-bet%, AF, busts…)
@@ -163,52 +170,83 @@ tumbleweed/
 │   ├── bench_vs_overfolders.py#   A/B a bot against the over-folders
 │   └── read_logs/             #   mining the real match logs
 │       ├── parse.py           #     the parser (segments streets, attributes chips correctly)
+│       ├── leaderboard.py     #     the final Q2 top-64, used to tier opponents
 │       ├── field_profile.py   #     fold-to-3bet/4bet by tier  → the over-fold chart
 │       ├── my_results.py      #     my real-log behaviour + results, by opponent strength
 │       └── q1_leaks.py        #     the Q1 post-mortem that found the original leaks
 ├── figures/                   # the charts above + make_figures.py (redraws them)
-└── tests/                     # pytest: safety invariants + that the exploits fire, stay disciplined
+└── tests/                     # pytest: safety invariants, exploit discipline, and a smoke suite
 ```
 
-> The tools and the field generator are scrappy on purpose: they aren't a library. This is already the clean repo structure lol
+> The tools and the field generator are scrappy on purpose: they aren't a library — they're the
+> instruments this one project needed, kept exactly as they were used.
 
-The match harness (`fullhouse-engine`) and `eval7` are external, referenced but not included.
+The match harness (`fullhouse-engine`) is external, referenced but not included.
 
 ## Running it
 
 Everything goes through `tk.py`, a thin CLI over the suite. `tk.py <command> --help` shows that tool's
-own flags. The charts and the bot unit tests need no engine:
+own flags. Dependencies are three pip packages (`pip install -r requirements.txt`), and the charts,
+the field generator and the tests need no engine and no logs:
 
 ```bash
-pip install matplotlib && python tk.py make-figures        # redraws the charts
-pip install pytest eval7 && python -m pytest tests/        # 45 checks: safety + the exploits fire
+pip install -r requirements.txt
+python -m pytest tests/           # safety invariants + exploit discipline + a smoke suite
+python tk.py make-figures         # redraws the charts (incl. computing the range grids
+                                  #   by calling each bot's own decide() on all 169 hands)
+python tk.py field                # regenerates the 26 template-generated opponents in place
 ```
 
-The rest needs the competition's harness, **fullhouse-engine** (the dealer `sandbox/match.py`, the
-rules, and the field bots). Clone it as a sibling of this folder and the tools find it on their own (or
-set `FULLHOUSE_ENGINE` to wherever it lives):
+The benchmark commands need the competition's harness, **fullhouse-engine** (the dealer
+`sandbox/match.py`, the rules, and its reference bots). Clone it as a sibling of this folder and the
+tools find it on their own (or set `FULLHOUSE_ENGINE` to wherever it lives):
 
 ```bash
 # 1. put this repo and the engine side by side:
 #      …/your-folder/
 #      ├── tumbleweed/         (this repo)
 #      └── fullhouse-engine/   (the harness)
-git clone https://github.com/uzlez/fullhouse-engine.git ../fullhouse-engine
-pip install eval7 numpy scipy matplotlib
+git clone https://github.com/mbatv/fullhouse-engine.git ../fullhouse-engine
 
 # 2. run the suite (no PYTHONPATH to set, the tools locate the engine):
 python tk.py --help                                                    # the whole suite
 python tk.py compare bots/gunslinger bots/tumbleweeddutch_v21 --crn --survivor --seeds 300
-python tk.py audit   bots/gunslinger --survivor --seeds 80             # behavioural fingerprint
 python tk.py tournament bots/gunslinger                                # full Swiss simulation
+python tk.py crossval                                                  # held-out reference field
 python tk.py overfolders                                               # Gunslinger vs Dutch vs the over-folders
+python tk.py audit   bots/gunslinger --survivor --seeds 80             # behavioural fingerprint*
 ```
 
-The two log-mining commands read the real Q2 match history, which isn't in this repo. Point
-`Q2_MATCH_DIR` at it:
+*`audit` is the one command the public engine can't run: it parses a per-hand event stream that
+`sandbox/match.py` only emits with `--full-json`, a flag I patched into my competition-era copy of
+the engine. On a stock clone it tells you exactly that and exits; the other benchmarks only need
+the stock `--json` and run as-is.
+
+The log-mining commands read the real match history, which isn't in this repo (it's competitor
+data). Point `Q2_MATCH_DIR` / `Q1_MATCH_DIR` at the right stage's logs:
 
 ```bash
 export Q2_MATCH_DIR=/path/to/matchhistoryq2
 python tk.py profile      # the field's fold-to-3bet/4bet by tier
 python tk.py results      # my chip-Δ and showdown record by opponent strength
+
+export Q1_MATCH_DIR=/path/to/q1-match-history
+python tk.py q1-leaks     # the Q1 post-mortem that set v2's task list
 ```
+
+## Known quirks
+
+Kept as-is because the three bots under `bots/` are the exact code that placed #28 / #14 / #4 —
+they get comments, not fixes:
+
+- **Gunslinger's coarse opponent counters never bucket `"bet"`** (the engine's label for an
+  unraised postflop bet), so its tightness estimate reads a frequent postflop bettor as more
+  passive than they are. The street-aware stats (`_process_hand`) count bets correctly; only
+  `estimate_opp_tightness` under-weights postflop betting. Flagged in `bots/gunslinger/bot.py`.
+- **The Monte-Carlo loop's card-collision guard skips instead of resampling**, which would
+  slightly shrink the effective sample — but at every call site in the shipped bots the opponent
+  combos are pre-filtered against my hole cards and the board, so the skip is unreachable.
+- **Gunslinger's internal `BOT_NAME` is `"tumbleweeddutch_v24"`** — the name it was actually
+  registered under at the final. "Gunslinger" is the repo's name for that layer, not the engine's.
+- **The multiway equity discount** (`eq ** (1 + 0.35·(n−1))`) is a tuned heuristic, not a derived
+  formula.

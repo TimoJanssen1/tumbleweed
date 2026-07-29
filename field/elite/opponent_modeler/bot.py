@@ -5,7 +5,7 @@ preflop raise rate (PFR-proxy), and postflop aggression. Maintains a Bayesian
 estimate of their range tightness. Plays equity-vs-modeled-range with
 adjustments per opponent.
 
-Designed to be a tough adversary for phase_hunter — it has its own classifier
+Designed to be a tough adversary for the hero bots — it has its own classifier
 and adapts. Will not fold to overbets when the equity says to call.
 """
 

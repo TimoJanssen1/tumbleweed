@@ -20,6 +20,8 @@ import random
 from collections import defaultdict
 from itertools import combinations
 
+# Kept as-is: this is the name the bot was actually registered under at the
+# final — the "Gunslinger" branding is the repo's, not the engine's.
 BOT_NAME = "tumbleweeddutch_v24"
 
 STARTING_STACK = 10000
@@ -153,6 +155,10 @@ def equity_vs_range(my_hole, board, opp_combos, n_trials=160):
     need = 5 - len(board)
     for _ in range(n_trials):
         c1, c2 = random.choice(opp_combos)
+        # Collision guard: skip (rather than resample) a sampled opponent combo
+        # that shares a card with my hand/board, slightly shrinking effective n.
+        # In this bot it is actually unreachable: every call site builds
+        # opp_combos with blocked=set(hole)|set(board), which is exactly `used`.
         if c1 in used or c2 in used:
             continue
         opp_used = used | {c1, c2}
@@ -238,8 +244,6 @@ def _board_condition_range(opp_combos, board, bet_ratio):
 
 OPP = defaultdict(lambda: {
     "actions": 0, "raises": 0, "calls": 0, "folds": 0, "checks": 0,
-    "pf_raises": 0, "pf_voluntary": 0, "pf_actions": 0,
-    "post_raises": 0, "post_actions": 0,
     "hands_seen": set(),
 })
 
@@ -262,6 +266,14 @@ def absorb_log(state):
         s = OPP[bid]
         s["actions"] += 1
         s["hands_seen"].add(h)
+        # KNOWN QUIRK (shipped this way; kept as a historical artifact): these
+        # coarse counters never bucket "bet" — the engine's label for an
+        # unraised postflop bet — so a bet bumps "actions" but not "raises".
+        # estimate_opp_tightness() (raise_freq vs fold_freq) therefore reads a
+        # frequent postflop BETTOR as more passive than they are. Preflop is
+        # unaffected (openings are logged as "raise"), and the street-aware
+        # stats in _process_hand() below do count "bet" as aggression; only
+        # the tightness estimate under-weights postflop betting.
         if a == "fold":
             s["folds"] += 1
         elif a == "check":

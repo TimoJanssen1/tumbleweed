@@ -1,0 +1,5 @@
+# Everything the repo itself needs. The match harness (fullhouse-engine) is
+# external — see README "Running it".
+eval7        # showdown evaluator used by the bots (and so by tests + figures)
+matplotlib   # figures/make_figures.py
+pytest       # tests/

@@ -13,9 +13,9 @@ and the MIT Pokerbots playbook:
     - Mixed sizing menus (avoids being read by simple classifiers)
     - Stack-off discipline (no committing > 50 % of stack without >= 60 % eq)
 
-This bot is designed to be a real benchmark threat to phase_hunter. If
-phase_hunter beats it consistently, phase_hunter's edge is genuine. If it
-ties or loses, phase_hunter has work to do.
+This bot is designed to be a real benchmark threat to the hero bots. If a
+hero version beats it consistently, that version's edge is genuine. If it
+ties or loses, the hero has work to do.
 
 No data/ dependency. Single file. ~1100 lines. Passes the validator.
 """

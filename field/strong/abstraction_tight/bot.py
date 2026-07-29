@@ -6,8 +6,8 @@ Strategy: discretizes bet sizes into a small tree, uses bucketed strategy tables
 Mimics a Slumbot-style blueprint trained on simplified game.
 
 Critically: when faced with off-tree bet sizes (e.g. opponent overbets),
-translates to nearest tree node. This translation is the documented exploit
-that breaker_sniper/phase_hunter overbet branches are designed to attack.
+translates to nearest tree node. This translation is the classic weakness of
+abstraction bots — an overbetting opponent can attack it deliberately.
 """
 
 import eval7
