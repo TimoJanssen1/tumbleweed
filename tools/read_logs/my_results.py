@@ -2,20 +2,10 @@
 were at the table (the "I farmed weak tables" chart), plus per-opponent detail."""
 import sys, os, statistics
 from collections import Counter, defaultdict
-import eval7
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from parse import attribute_match, clean_matches, our_id, segment_hand
+from leaderboard import rank_of
 
-LB = ["jew","CallMeMaybe","SevenDeuces","NecessarySkew","Looper257","Oxvard","BussBot-v3","Taleto13","winning",
- "CrimsonBot","FerdaBot","Khan’t Fold","make_no_mistakes","Tumble-Weed-Dutch-v2","Lekemog","ant-bot","twader",
- "Hyperion","durak","jotaroZAWARUDO","TheQuantBot","talan","Overfitted","Inefficiency","+ev","Pantheon",
- "sam_bot_lfg_2","50CentRaise","IveyBot","𝐛𝐚𝐯","poker? I barely know her","pavan kumar","I hate arsenal","Pascal",
- "RODBOTv2","BATNEEC","GrandSlam","Javis","Freelo","Super2Trooper","goku","72o","alan","elprofesoriqo",
- "not_so_simple_bot","Lyra","SaviourBot","TheHouse","I'mDeffoCappin","VolatileNeuron","never played poker",
- "gems_VC2","PhoonTooMuchForPoker","Thorp","SummerSun","SuperExtraDeluxeMegaBot","NEMESIS","G-Forge",
- "TheCrystalline","Bot2","BeginnersLuck V3","Foldilocks","BOTv2","Worm"]
-RANK={n:i+1 for i,n in enumerate(LB)}
-def rank_of(n): return RANK.get(n,200)
 def tier(n):
     r=rank_of(n)
     return "T16" if r<=16 else ("T17-64" if r<=64 else "65+")
@@ -24,10 +14,15 @@ def preflop_actions(h):
     return [a for a in h["action_log"] if a.get("street")=="preflop"]
 
 def main():
+    import argparse
+    argparse.ArgumentParser(
+        description="My real-log results by opponent strength. "
+                    "Reads $Q2_MATCH_DIR/*.json."
+    ).parse_args()
     cm=clean_matches()
     oid_name="Tumble-Weed-Dutch-v2"
     # per-opponent encounter + showdown
-    enc=defaultdict(lambda: {"hands":0,"sd":0,"sd_w":0,"hu_net":0,"hu_n":0,"open_vs_us":0,
+    enc=defaultdict(lambda: {"hands":0,"sd":0,"sd_w":0,"open_vs_us":0,
                              "they3bet_us":0,"we_folded_to_their_3bet":0})
     # behavioral splits by opponent tier
     vs_open=defaultdict(Counter)       # tier -> our response to their open
@@ -102,8 +97,6 @@ def main():
                     if we_won: sd_by_tier[t][0]+=1; enc[name[xb]]["sd_w"]+=1
                     else: sd_by_tier[t][1]+=1
                     enc[name[xb]]["sd"]+=1
-            # HU pot net (only us + one opp contributed beyond blinds) via authoritative winnings
-            contribs=[s for s in amap if rec["h"]]  # placeholder
     # ---- OUTPUT ----
     print("=== SHOWDOWN RECORD BY OPPONENT TIER (all-in & non-all-in showdowns, stable ids) ===")
     for t in ["T16","T17-64","65+"]:

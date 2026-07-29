@@ -1,6 +1,6 @@
 """Q1 post-mortem analyzer for Tumble-Weed.
 
-Walks every match in `match history/`, identifies Tumble-Weed's seat,
+Walks every match in the Q1 match history, identifies Tumble-Weed's seat,
 replays every hand and records what TW did at each decision point.
 
 Outputs:
@@ -11,13 +11,14 @@ Outputs:
   - Position-tagged action mix (open vs facing-raise vs in BB etc.)
   - Action-vs-stack-depth breakdown (deep / mid / short)
 
-Reads:   match history/*.json
+Reads:   $Q1_MATCH_DIR/*.json (the real Q1 match history; not in this repo)
 Writes:  prints a report to stdout. Also dumps a CSV at
-         analysis/q1_postmortem_decisions.csv with one row per TW decision.
+         tools/read_logs/q1_postmortem_decisions.csv, one row per TW decision.
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
 import glob
 import json
@@ -27,8 +28,10 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import Iterable
 
+# The real Q1 match history isn't part of this repo. Point Q1_MATCH_DIR at it
+# (same pattern as Q2_MATCH_DIR for the two Q2 log tools).
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MATCH_DIR = os.path.join(ROOT, "match history")
+MATCH_DIR = os.environ.get("Q1_MATCH_DIR", os.path.join(ROOT, "match history"))
 OUT_CSV = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "q1_postmortem_decisions.csv")
 
@@ -648,6 +651,14 @@ def print_report(decisions: list[Decision], summary: dict) -> None:
 
 
 def main():
+    ap = argparse.ArgumentParser(
+        description="Q1 post-mortem: replay the real Q1 logs and catalogue "
+                    "Tumble-Weed's decisions. Reads $Q1_MATCH_DIR/*.json.")
+    ap.parse_args()
+    if not glob.glob(os.path.join(MATCH_DIR, "*.json")):
+        sys.exit(f"error: no match logs (*.json) found in {MATCH_DIR!r}.\n"
+                 "The real Q1 match history isn't part of this repo — "
+                 "set Q1_MATCH_DIR to the folder that contains it.")
     decisions, summary = collect_decisions()
     write_csv(decisions)
     print_report(decisions, summary)

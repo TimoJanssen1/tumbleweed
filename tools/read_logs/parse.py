@@ -16,6 +16,10 @@ def load_matches():
     out = []
     for fn in sorted(glob.glob(os.path.join(DIR, "*.json"))):
         out.append((fn, json.load(open(fn))))
+    if not out:
+        sys.exit(f"error: no match logs (*.json) found in {DIR!r}.\n"
+                 "The real Q2 match history isn't part of this repo — "
+                 "set Q2_MATCH_DIR to the folder that contains it.")
     return out
 
 def segment_hand(hand):
@@ -90,6 +94,12 @@ def segment_hand(hand):
 
 if __name__ == "__main__":
     matches = load_matches()
+    matches = [(fn, d) for fn, d in matches
+               if any(b["bot_name"] == OURS for b in d["bots"])]
+    if not matches:
+        sys.exit(f"error: none of the logs in {DIR!r} contain {OURS!r} — "
+                 "these look like the wrong stage's logs (Q2_MATCH_DIR should "
+                 "point at the Q2 match history).")
     tot_delta = 0; per_match = []; busts = 0; errs = 0
     pot_ok = pot_bad = street_ok = street_bad = 0
     hands_total = 0
@@ -106,15 +116,18 @@ if __name__ == "__main__":
             _, _, (po, so) = segment_hand(h)
             pot_ok += po; pot_bad += (not po)
             street_ok += so; street_bad += (not so)
-    print(f"=== OVERALL (40 matches, our bot = {OURS}) ===")
+    print(f"=== OVERALL ({len(matches)} matches, our bot = {OURS}) ===")
     print(f"  total cumulative chip-delta : {tot_delta:+,}")
     print(f"  mean per match              : {tot_delta/len(matches):+,.0f}")
     print(f"  matches                     : {len(matches)}   busts(-10k): {busts}   scoops(+50k): {sum(1 for x in per_match if x[0]==50000)}")
     print(f"  total hands                 : {hands_total}")
     print(f"  our bot_errors              : {errs}")
     print(f"\n=== PARSER VALIDATION ===")
-    print(f"  pot reconciles    : {pot_ok}/{hands_total} ({100*pot_ok/hands_total:.2f}%)   bad={pot_bad}")
-    print(f"  street_ended match: {street_ok}/{hands_total} ({100*street_ok/hands_total:.2f}%)  bad={street_bad}")
+    if hands_total:
+        print(f"  pot reconciles    : {pot_ok}/{hands_total} ({100*pot_ok/hands_total:.2f}%)   bad={pot_bad}")
+        print(f"  street_ended match: {street_ok}/{hands_total} ({100*street_ok/hands_total:.2f}%)  bad={street_bad}")
+    else:
+        print("  no hands found in these logs — nothing to validate")
     print(f"\n=== PER-MATCH (sorted by our delta) ===")
     for delta, rnd, fn, nh, names, status in sorted(per_match):
         opps = [n for n in names if n != OURS]
@@ -179,5 +192,10 @@ def our_id(d):
     return [b["bot_id"] for b in d["bots"] if b["bot_name"] == OURS][0]
 
 def clean_matches():
-    return [(fn, d) for fn, d in load_matches()
-            if len(d["bots"]) == 6 and d.get("status") == "complete"]
+    out = [(fn, d) for fn, d in load_matches()
+           if len(d["bots"]) == 6 and d.get("status") == "complete"
+           and any(b["bot_name"] == OURS for b in d["bots"])]
+    if not out:
+        sys.exit(f"error: no complete 6-bot matches containing {OURS!r} in "
+                 f"{DIR!r} — set Q2_MATCH_DIR to the real Q2 match history.")
+    return out
