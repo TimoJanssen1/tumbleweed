@@ -9,9 +9,11 @@ remember all their names.
     python tk.py audit   bots/gunslinger --survivor --seeds 80
     python tk.py --help
 
-Everything except `make-figures` runs against the competition harness
-(fullhouse-engine) — clone it alongside this folder. `--help` after any command
-forwards to that tool's own options.
+The benchmark commands (compare/audit/tournament/crossval/overfolders) run
+against the competition harness (fullhouse-engine) — clone it alongside this
+folder. The log commands (profile/results/q1-leaks) need the real match logs
+(Q2_MATCH_DIR / Q1_MATCH_DIR); `field` and `make-figures` need neither.
+`--help` after any command forwards to that tool's own options.
 """
 import os
 import subprocess
@@ -29,6 +31,7 @@ COMMANDS = {
     "field":       ("field/generate.py",               "(re)generate the synthetic opponent field"),
     "profile":     ("tools/read_logs/field_profile.py","measure the field's fold rates from real match logs"),
     "results":     ("tools/read_logs/my_results.py",   "my chip-Δ by opponent strength, from real match logs"),
+    "q1-leaks":    ("tools/read_logs/q1_leaks.py",     "the Q1 post-mortem that found the original leaks"),
     "make-figures":("figures/make_figures.py",         "redraw the README charts (needs only matplotlib)"),
 }
 

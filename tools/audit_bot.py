@@ -20,8 +20,8 @@ Parsing `events` (not action_log) makes street + 3-bet/c-bet detection exact
 rather than heuristic. seat→bot mapping is unnecessary: events carry bot_id.
 
 Usage:
-    python3 analysis/decision_audit.py <hero> [--seeds 80] [--hands 400]
-            [--survivor] [--exclude-tier weak --exclude-tier mid] [--workers 6]
+    python tk.py audit <hero> [--seeds 80] [--hands 400]
+           [--survivor] [--exclude-tier weak --exclude-tier mid] [--workers 6]
 """
 import argparse
 import json
@@ -34,8 +34,8 @@ from pathlib import Path
 
 from _engine import REPO, ENGINE, MATCH, ENV, resolve_bot
 
-from analysis.field_registry import (discover_field, sample_field_seeded,
-                                      TIER_WEIGHTS, apply_survivor)
+from opponent_fields import (discover_field, sample_field_seeded,
+                             TIER_WEIGHTS, apply_survivor)
 
 BUST = -10000
 SCOOP = 50000
@@ -255,6 +255,21 @@ def main():
     ap.add_argument("--survivor", action="store_true",
                     help="elite-heavy finalist field (models Q2)")
     args = ap.parse_args()
+
+    # The audit parses each hand's `events` stream, which sandbox/match.py only
+    # emits with --full-json — a flag I patched into my competition-era engine.
+    # The public fullhouse-engine ships without it (its --json is end-of-match
+    # totals only), so on a stock clone there is nothing to parse: say so
+    # up front instead of reporting "No completed matches".
+    probe = subprocess.run([sys.executable, MATCH, "--help"],
+                           capture_output=True, text=True, cwd=str(ENGINE), env=ENV)
+    if "--full-json" not in (probe.stdout + probe.stderr):
+        sys.exit(f"error: {MATCH} has no --full-json flag, so it can't emit the "
+                 "per-hand event stream this audit parses. The public "
+                 "fullhouse-engine ships without that patch; point "
+                 "FULLHOUSE_ENGINE at an engine whose match.py supports "
+                 "--full-json to run the audit. (compare/tournament/crossval/"
+                 "overfolders only need --json and work on the stock engine.)")
 
     field = discover_field()
     for tier in args.exclude_tier:

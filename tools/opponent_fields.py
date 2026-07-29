@@ -1,5 +1,5 @@
 """
-Field registry — discovers all bots in bots/field/ and provides weighted
+Field registry — discovers all bots in field/ and provides weighted
 sampling functions for benchmarks and Swiss simulations.
 
 Tier weights are calibrated to my estimated qualifier-field distribution:
@@ -32,10 +32,9 @@ TIER_WEIGHTS = {
 }
 
 # Survivor / finalist field: models a Q2 field of qualifiers — elite-heavy,
-# no weak/broken. This is the field on which the fork decision was made
-# (mentor_v2 sweeps it) and the primary acceptance surface for tumbleweeddutch.
-# Needed because swiss_sim's built-in elite-shift only reaches ~17% elite at
-# rounds=5, far short of the ~40% that actually models Q2.
+# no weak/broken. This was the primary acceptance surface for the Q2 bot.
+# Needed because tournament_sim's built-in elite-shift only reaches ~17% elite
+# at rounds=5, far short of the ~40% that actually models Q2.
 SURVIVOR_WEIGHTS = {
     "elite":  0.40,
     "strong": 0.40,
@@ -51,11 +50,11 @@ def apply_survivor(field):
 
 
 def discover_field():
-    """Walk bots/field/* and return {tier: [bot_dir_path, ...]}.
+    """Walk field/* and return {tier: [bot_dir_path, ...]}.
 
     Returns paths relative to repo root (suitable for sandbox/match.py)."""
     field = {}
-    base = REPO / "bots" / "field"
+    base = REPO / "field"
     if not base.is_dir():
         return field
     for tier_dir in sorted(base.iterdir()):

@@ -2,11 +2,9 @@
 Bot template strings for the synthetic field generator.
 
 Each template is Python source code with `{name}`-style placeholders.
-The generator (analysis/generate_field.py) fills in placeholders to
+The generator (field/generate.py) fills in placeholders to
 materialize each generated bot.py as a self-contained module.
 """
-
-from analysis.preflop_table import render_eq_table_source
 
 
 # ============================================================================
@@ -246,8 +244,8 @@ Strategy: discretizes bet sizes into a small tree, uses bucketed strategy tables
 Mimics a Slumbot-style blueprint trained on simplified game.
 
 Critically: when faced with off-tree bet sizes (e.g. opponent overbets),
-translates to nearest tree node. This translation is the documented exploit
-that breaker_sniper/phase_hunter overbet branches are designed to attack.
+translates to nearest tree node. This translation is the classic weakness of
+abstraction bots — an overbetting opponent can attack it deliberately.
 """
 {common_header}
 {mc_helpers}

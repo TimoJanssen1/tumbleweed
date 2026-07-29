@@ -1,5 +1,5 @@
 """Locate the external fullhouse-engine so the benchmark tools can find the
-dealer (sandbox/match.py), its analysis/* modules, and the field bots.
+dealer (sandbox/match.py) and its reference bots.
 
 The engine isn't part of this repo (it's the competition's harness). It's found
 via $FULLHOUSE_ENGINE, or failing that a sibling folder ../fullhouse-engine.
@@ -23,10 +23,10 @@ ENV = {**os.environ, "PYTHONPATH": os.pathsep.join(
 
 
 def resolve_bot(path):
-    """Make a bot path absolute so cwd doesn't matter. My own bots (bots/…) live
-    in this repo; the field opponents (bots/field/…) live in the engine. Try this
-    repo first, then the engine; fall back to the raw string so match.py reports a
-    clear error if neither has it."""
+    """Make a bot path absolute so cwd doesn't matter. My own bots (bots/…) and
+    the field opponents (field/…) live in this repo; the reference bots (bots/…)
+    live in the engine. Try this repo first, then the engine; fall back to the
+    raw string so match.py reports a clear error if neither has it."""
     s = str(path)
     for base in (REPO, ENGINE):
         if (base / s).exists():

@@ -12,7 +12,7 @@ After N simulations, reports:
   - P(cumulative > threshold) for top-64 estimation (threshold ~80k for 400-bot field)
 
 Usage:
-    python3 analysis/swiss_sim.py <hero> [--sims 100] [--rounds 3] [--hands 400]
+    python tk.py tournament <hero> [--sims 100] [--rounds 3] [--hands 400]
 """
 import argparse
 import json
@@ -27,7 +27,8 @@ from pathlib import Path
 
 from _engine import REPO, ENGINE, MATCH, ENV, resolve_bot
 
-from analysis.field_registry import discover_field, sample_field_seeded, TIER_WEIGHTS, apply_survivor
+from opponent_fields import (discover_field, sample_field_seeded, TIER_WEIGHTS,
+                             apply_survivor, sample_opponents)
 
 
 def run_match(args):
@@ -103,9 +104,8 @@ def main():
             saved = random.getstate()
             try:
                 random.setstate(rng.getstate())
-                from analysis.field_registry import sample_opponents
                 opps = sample_opponents(field, n=5, weights=weights,
-                                         exclude=[args.hero])
+                                        exclude=[args.hero])
             finally:
                 random.setstate(saved)
             jobs.append(([args.hero] + opps, seed, args.hands))

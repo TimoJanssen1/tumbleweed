@@ -6,7 +6,7 @@ runs both heroes through that same field, allowing a paired-difference
 test that's much more powerful than an independent-samples test.
 
 Usage:
-    python3 analysis/paired_compare.py <hero_a> <hero_b> [--seeds 200]
+    python tk.py compare <hero_a> <hero_b> [--seeds 200] [--crn] [--survivor]
 """
 import argparse
 import json
@@ -19,7 +19,7 @@ from pathlib import Path
 
 from _engine import REPO, ENGINE, MATCH, ENV, resolve_bot
 
-from analysis.field_registry import discover_field, sample_field_seeded, apply_survivor
+from opponent_fields import discover_field, sample_field_seeded, apply_survivor
 
 
 def run_match(args):

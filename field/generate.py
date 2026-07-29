@@ -1,29 +1,27 @@
 """
-Field generator — materializes 30+ bot.py files from parameterized templates.
+Field generator — materializes the 26 template-generated bot.py files.
 
 Each generated bot is fully self-contained (preflop equity table inlined,
 no external imports beyond eval7/random/collections/itertools/math/time).
 
-Run:  python3 analysis/generate_field.py
+Run:  python tk.py field
 
 Output:
-  bots/field/strong/*/bot.py    (8 bots — strong, mid-elite quality)
-  bots/field/mid/*/bot.py       (10 bots — typical heuristic / LLM-style)
-  bots/field/weak/*/bot.py      (5 bots — template tilts / single-rule)
-  bots/field/broken/*/bot.py    (3 bots — error-mode for engine testing)
+  field/strong/*/bot.py    (8 bots — strong, real-time MC equity variants)
+  field/mid/*/bot.py       (10 bots — typical heuristic / LLM-style)
+  field/weak/*/bot.py      (5 bots — template tilts / single-rule)
+  field/broken/*/bot.py    (3 bots — error-mode for engine testing)
 
-Plus tests/test_field_bots.py that validates every generated bot.
+The elite tier (field/elite/, 4 bots) and the calibrated over-folders
+(field/overfolders/, 5 bots) are hand-written, not generated here.
 """
 
-import os
-import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO))
 
-from analysis.preflop_table import render_eq_table_source
-from analysis.templates import (
+from preflop_table import render_eq_table_source
+from templates import (
     COMMON_HEADER, MC_EQUITY_HELPERS, SAFE_DECIDE_WRAPPER,
     MC_EQUITY_BOT, ABSTRACTION_BOT, MIXED_SIZING_BOT,
     HAND_CHART_BOT, POT_ODDS_BOT, LLM_BOILERPLATE_BOT,
@@ -214,9 +212,13 @@ def all_bots():
 
 
 def main():
+    import argparse
+    argparse.ArgumentParser(
+        description="(Re)generate the 26 template-generated field bots in place."
+    ).parse_args()
     written = []
     for tier_name, bot in all_bots():
-        out = REPO / "bots" / "field" / tier_name / bot["name"] / "bot.py"
+        out = REPO / "field" / tier_name / bot["name"] / "bot.py"
         materialize(bot["template"], out, **bot["params"])
         written.append(str(out.relative_to(REPO)))
 
